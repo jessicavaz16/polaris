@@ -80,7 +80,7 @@ int Core::tick() {
     // Execute the decoded instruction
     switch (instr.opcode) {
         case RV_SYS: // System instructions
-            if (instr.funct3 == 0x0 && instr.funct7 == 0x1 && instr.rs1_s == 0x0 && instr.rd_s == 0x0) { // EBREAK
+            if (instr.funct3 == 0x0 && instr.imm_i == 0x1 && instr.rs1_s == 0x0 && instr.rd_s == 0x0) { // EBREAK
                 return -1; // Return -1 to indicate EBREAK
             }
             break;
@@ -148,7 +148,7 @@ int Core::tick() {
         
         case RV_JAL: // JAL (Jump and Link)
             rf[instr.rd_s] = pc_next; // Store the return address in the link register
-            pc_next = (pc + instr.imm_j) & ~0b1;; // Jump to the target address
+            pc_next = (pc + instr.imm_j) & ~0b1; // Jump to the target address
             break;
             
         case RV_JALR: // JALR (Jump and Link Register)
@@ -267,12 +267,15 @@ int Core::tick() {
             }
             break;
         default:
-            throw std::runtime_error("Unknown opcode: " + std::to_string(instr.opcode) + "at pc: " + std::to_string(pc)); // Handle unknown opcodes
+            printf("Unknown opcode: %02x at PC: 0x%08x\n ", instr.opcode, pc);
+            throw std::runtime_error("Runtime Error"); // Handle unknown opcodes
             break;
     }
 
     // Update the program counter to the next instruction
     pc = pc_next;
+
+    rf[0] = 0; // x0 is hardwired to 0
 
     // Return 0 to indicate successful execution of 1 cycle
     return 0;

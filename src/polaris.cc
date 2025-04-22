@@ -17,7 +17,7 @@ std::string header =
 " RISC-V ISA Simulator  (v1.0)\n"
 "==================================\n";
 
-int interactive(Core &core, Memory &mem) {
+int interactive(Core &core, Memory &mem, bool verbose=false) {
     std::string help =
         "Commands:\n"
         " h, help: Show this help message\n";
@@ -40,7 +40,7 @@ int interactive(Core &core, Memory &mem) {
             return 0;
         } else if (cmd == "s" || cmd == "step") {
             int rc = core.tick();
-            core.dumpRF(true);
+            core.dumpRF(!verbose);
             if (rc != 0) {
                 return rc;
             }
@@ -63,12 +63,15 @@ int main(int argc, char** argv) {
     // Parse Arguments
     ArgParse::ArgumentParser parser("polaris", "RISC-V simulator");
     parser.add_argument({"-d", "--debug"}, "Enable debug mode", ArgParse::ArgType_t::BOOL, "false");
+    parser.add_argument({"-v", "--verbose"}, "Enable verbose output", ArgParse::ArgType_t::BOOL, "false");
 
     if(parser.parse_args(argc, argv) != 0) {
         return 1;
     }
     auto opt_args = parser.get_opt_args();
     auto pos_args = parser.get_pos_args();
+
+    bool verbose = opt_args["verbose"].value.as_bool;
 
     int rc = 0;
     try {
@@ -90,7 +93,7 @@ int main(int argc, char** argv) {
         // Run the simulator
         if(opt_args["debug"].value.as_bool) {
             std::cout << "Debug mode enabled\n";
-            rc = interactive(core, mem);
+            rc = interactive(core, mem, verbose);
         }
         else {
             std::cout << "Running in normal mode\n";

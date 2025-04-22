@@ -21,6 +21,21 @@ Core::Core(Memory *mem) {
 Core::~Core() {
 }
 
+uint32_t Core::mem_read (uint32_t address) {
+    // Read a 32-bit word from memory at the specified address
+    uint32_t value = mem->read(address & ~0b11); // Align to 4-byte boundary
+    return value;
+}
+
+void Core::mem_write (uint32_t address, uint32_t value, uint8_t mask){
+    // Write a 32-bit word to memory at the specified address
+    if (address == (UINT32_MAX & ~0b11)) { // Check if writing to last word
+        printf("%c", value & 0xFF); // Print the character
+        return; // Ignore writes to address -1
+    }
+    mem->write(address & ~0b11, value, mask); // Align to 4-byte boundary
+}
+
 void Core::reset(xlen_t pc) { 
     this->pc = pc;
     for (int i = 0; i < 32; ++i) {
@@ -59,7 +74,7 @@ int Core::tick() {
     // Implement the core's behavior during a clock tick
 
     // Fetch the next instruction from memory
-    instr.value = mem->read(pc); 
+    instr.value = mem_read(pc); 
     
     // Increment the program counter by 4 bytes (assuming 32-bit instructions)
     xlen_t pc_next = pc + 4; 
@@ -88,7 +103,7 @@ int Core::tick() {
         case RV_LD: // Load instructions
             {
                 uint32_t mem_addr = rf[instr.rs1_s] + instr.imm_i;  
-                uint32_t mem_rdata = mem->read(mem_addr & ~0b11);   
+                uint32_t mem_rdata = mem_read(mem_addr & ~0b11);   
                 
                 switch (instr.funct3) {
                     case 0x0: // LB (Load Byte)
@@ -134,7 +149,7 @@ int Core::tick() {
                     default:
                         break;
                 }
-                mem->write(store_addr & ~0b11, mem_wdata, mem_mask); // Write the data to memory
+                mem_write(store_addr & ~0b11, mem_wdata, mem_mask); // Write the data to memory
             }
             break;
 
@@ -143,49 +158,49 @@ int Core::tick() {
             break;
         
         case RV_AUIPC: // AUIPC (Add Upper Immediate to PC)
-            rf[instr.rd_s] = pc + instr.imm_u; 
+            rf[instr.rd_s] = (xlen_t)((int32_t)pc + instr.imm_u); 
             break;
         
         case RV_JAL: // JAL (Jump and Link)
             rf[instr.rd_s] = pc_next; // Store the return address in the link register
-            pc_next = (pc + instr.imm_j) & ~0b1; // Jump to the target address
+            pc_next = (xlen_t)((int32_t)pc + instr.imm_j) & ~0b1; // Jump to the target address
             break;
             
         case RV_JALR: // JALR (Jump and Link Register)
             rf[instr.rd_s] = pc_next; // Store the return address in the link register
-            pc_next = (rf[instr.rs1_s] + instr.imm_i) & ~0b1; // Jump to the target address
+            pc_next = (xlen_t)((int32_t)rf[instr.rs1_s] + instr.imm_i) & ~0b1; // Jump to the target address
             break;
 
         case RV_BR: // Branch instructions
             switch (instr.funct3) {
                 case 0x0: // BEQ (Branch if Equal)
                     if (rf[instr.rs1_s] == rf[instr.rs2_s]) {
-                        pc_next = pc + instr.imm_b; 
+                        pc_next = (xlen_t)((int32_t)pc + instr.imm_b); 
                     }
                     break;
                 case 0x1: // BNE (Branch if Not Equal)
                     if (rf[instr.rs1_s] != rf[instr.rs2_s]) {
-                        pc_next = pc + instr.imm_b;
+                        pc_next = (xlen_t)((int32_t)pc + instr.imm_b);
                     }
                     break;
                 case 0x4: // BLT (Branch if Less Than)
                     if ((int32_t)rf[instr.rs1_s] < (int32_t)rf[instr.rs2_s]) {
-                        pc_next = pc + instr.imm_b; 
+                        pc_next = (xlen_t)((int32_t)pc + instr.imm_b); 
                     }
                     break;
                 case 0x5: // BGE (Branch if Greater Than or Equal)
                     if ((int32_t)rf[instr.rs1_s] >= (int32_t)rf[instr.rs2_s]) {
-                        pc_next = pc + instr.imm_b;
+                        pc_next = (xlen_t)((int32_t)pc + instr.imm_b);
                     }
                     break;
                 case 0x6: // BLTU (Branch if Less Than Unsigned)
                     if (rf[instr.rs1_s] < rf[instr.rs2_s]) {
-                        pc_next = pc + instr.imm_b;
+                        pc_next = (xlen_t)((int32_t)pc + instr.imm_b);
                     }
                     break;
                 case 0x7: // BGEU (Branch if Greater Than or Equal Unsigned)
                     if (rf[instr.rs1_s] >= rf[instr.rs2_s]) {
-                        pc_next = pc + instr.imm_b;
+                        pc_next = (xlen_t)((int32_t)pc + instr.imm_b);
                     }
                     break;
                 default:

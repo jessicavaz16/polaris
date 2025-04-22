@@ -15,11 +15,13 @@ Memory::~Memory() {
 
 uint32_t Memory::read (uint32_t address) {
     if (address % 4 != 0) {
-        printf("Error: Address must be a multiple of 4\n");
+        printf("Read Error: Address must be a multiple of 4\n");
+        printf("Address: 0x%08x\n", address);
         return 0;
     }
     if (address >= size) {
-        printf("Error: Address out of bounds\n");
+        printf("Read Error: Address out of bounds\n");
+        printf("Address: 0x%08x\n", address);
         return 0;
     }
     return *(reinterpret_cast<uint32_t*>(data + address));
@@ -27,11 +29,13 @@ uint32_t Memory::read (uint32_t address) {
 
 void Memory::write (uint32_t address, uint32_t value, uint8_t mask) {
     if (address % 4 != 0) {
-        printf("Error: Address must be a multiple of 4\n");
+        printf("Write Error: Address must be a multiple of 4\n");
+        printf("Address: 0x%08x\n", address);
         return;
     }
     if (address >= size) {
-        printf("Error: Address out of bounds\n");
+        printf("Write Error: Address out of bounds\n");
+        printf("Address: 0x%08x\n", address);
         return;
     }
     

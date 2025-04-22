@@ -24,6 +24,13 @@ class Core {
         xlen_t rf[32];  // Register file (32 registers)
         instr_t instr;  // Instruction structure
 
+        // Read data from the specified address
+        uint32_t mem_read (uint32_t address);
+
+        // Write data to the specified address
+        void mem_write (uint32_t address, uint32_t value, uint8_t mask = 0b1111);
+ 
+
     public:
         // Constructor
         Core(Memory *mem);
